@@ -72,9 +72,9 @@ def get_kline(stock, type):
             "code": stock,
             "type": type
         }
-        _ma(res, 30)
-        _ma(res, 60)
-        _ma(res, 90)
+        # _ma(res, 30)
+        # _ma(res, 60)
+        # _ma(res, 90)
         return res
     return False
 
@@ -101,7 +101,7 @@ def upper_line(data, source, target):
 
 
 def vad_ma(res, history, kpi):
-    if not res or len(res) == 0 or res[0]['kline']['netChangeRatio'] == 'INF':
+    if not res or len(res) <= 1 or res[0]['kline']['netChangeRatio'] == 'INF':
         return False
     data = {
         "validate": res[0]['kline']['low'] <= res[0]['ma' + str(kpi)]['avgPrice'] and res[0]['kline'][
@@ -115,8 +115,7 @@ def vad_ma(res, history, kpi):
             "ma" + str(kpi): round(res[0]['ma' + str(kpi)]['avgPrice'], 2),
             "line": {
                 "ma5-10": upper_line(res, 'ma5', 'ma10'),
-                "ma5-20": upper_line(res, 'ma5', 'ma20'),
-                "ma5-30": upper_line(res, 'ma5', 'ma30')
+                "ma5-20": upper_line(res, 'ma5', 'ma20')
             }
         },
         "history": [],
