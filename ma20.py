@@ -30,7 +30,7 @@ def get_capital(code):
     try:
         response = requests.get('https://gupiao.baidu.com/stock/' + str(code) + '.html')
         doc = PyQuery(response.content)
-        return float(doc.find('.stock-bets .line2 dl:last dd').text().replace('亿', '')) * 1000000000
+        return int(float(doc.find('.stock-bets .line2 dl:last dd').text().replace('亿', '')) * 100000000)
     except:
         print('\033[1;34;40m[系统]\033[1;35;40m[' + str(code) + ']\033[0m获取流通股本失败...')
         return False
@@ -94,6 +94,12 @@ def _ma(res, count):
         }
 
 
+def upper_line(data, source, target):
+    now_diff = data[0][target]['avgPrice'] - data[0][source]['avgPrice']
+    prev_diff = data[1][target]['avgPrice'] - data[1][source]['avgPrice']
+    return prev_diff > now_diff >= 0
+
+
 def vad_ma(res, history, kpi):
     if not res or len(res) == 0 or res[0]['kline']['netChangeRatio'] == 'INF':
         return False
@@ -106,7 +112,12 @@ def vad_ma(res, history, kpi):
             "low": round(res[0]['kline']['low'], 2),
             "close": round(res[0]['kline']['close'], 2),
             "volume": res[0]['kline']['volume'] * 100,
-            "ma" + str(kpi): round(res[0]['ma' + str(kpi)]['avgPrice'], 2)
+            "ma" + str(kpi): round(res[0]['ma' + str(kpi)]['avgPrice'], 2),
+            "line": {
+                "ma5-10": upper_line(res, 'ma5', 'ma10'),
+                "ma5-20": upper_line(res, 'ma5', 'ma20'),
+                "ma5-30": upper_line(res, 'ma5', 'ma30')
+            }
         },
         "history": [],
         "kpi": "ma" + str(kpi),
@@ -169,7 +180,7 @@ def worker(stocks):
                 info = get_detail(code)
                 if capital:
                     result["current"]["capital"] = capital
-                    result["current"]["turnover"] = result['current']['volume'] * 100 / result['current']['capital']
+                    result["current"]["turnover"] = result['current']['volume'] / result['current']['capital']
                 if info:
                     result["industry"] = info['industry']
                     result["business"] = info['mainBusiness']
@@ -192,5 +203,6 @@ def __main__():
     t.join()
     print('\033[1;34;40m[系统]\033[1;35;40m[' + date + ']\033[0m本周共检索\033[1;32;40m ' +
           str(len(os.listdir('./res/' + str(date)))) + ' \033[0m条符合策略的股票纪录')
+
 
 __main__()
